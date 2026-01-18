@@ -1,0 +1,83 @@
+@using Viso.Tracker.Models
+@using Viso.Tracker.Services
+
+<section class="entry-history">
+    <h2>Time Entries</h2>
+
+    @if (!_groupedEntries.Any())
+    {
+        <MudAlert Severity="Severity.Info" Class="no-entries-alert">
+            No time entries yet. Create one to get started!
+        </MudAlert>
+    }
+    else
+    {
+        <div class="history-container">
+            @foreach (var dateGroup in _groupedEntries)
+            {
+                <div class="date-group">
+                    <div class="date-header">
+                        <h3>@dateGroup.Key.ToString("dddd, MMMM d, yyyy")</h3>
+                        <span class="daily-total" aria-label="@($"Total hours for {dateGroup.Key}: {_timeTrackingService?.GetDailyTotal(dateGroup.Key).ToString("F2")}")">
+                            @_timeTrackingService?.GetDailyTotal(dateGroup.Key).ToString("F2") hrs
+                        </span>
+                    </div>
+
+                    <div class="entries-list">
+                        <table role="table" aria-label="@($"Time entries for {dateGroup.Key}")">
+                            <thead>
+                                <tr>
+                                    <th>Project</th>
+                                    <th>Hours</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var entry in dateGroup)
+                                {
+                                    <tr>
+                                        <td data-label="Project">@entry.Project</td>
+                                        <td data-label="Hours">@entry.Hours.ToString("F2")</td>
+                                        <td data-label="Description">@entry.Description</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+
+            <div class="grand-total">
+                <h3>Grand Total</h3>
+                <span class="total-value" aria-label="@($"Grand total hours: {_timeTrackingService?.GetGrandTotal().ToString("F2")}")">
+                    @_timeTrackingService?.GetGrandTotal().ToString("F2") hours
+                </span>
+            </div>
+        </div>
+    }
+</section>
+
+@code {
+    [Inject]
+    public TimeTrackingService? _timeTrackingService { get; set; }
+
+    [Parameter]
+    public int RefreshTrigger { get; set; }
+
+    private List<IGrouping<DateOnly, TimeEntry>> _groupedEntries = new();
+
+    protected override void OnInitialized()
+    {
+        UpdateGroupedEntries();
+    }
+
+    protected override void OnParametersSet()
+    {
+        UpdateGroupedEntries();
+    }
+
+    private void UpdateGroupedEntries()
+    {
+        _groupedEntries = _timeTrackingService?.GetEntriesGroupedByDate().ToList() ?? new();
+    }
+}

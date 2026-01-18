@@ -1,0 +1,116 @@
+@using Viso.Tracker.Models
+@using Viso.Tracker.Services
+
+<section class="time-entry-form">
+    <h2>Log Time Entry</h2>
+    
+    <EditForm Model="@_entry" OnValidSubmit="@HandleSubmit">
+        <DataAnnotationsValidator />
+        
+        <div class="form-group">
+            <label for="entryDate" class="form-label">Date</label>
+            <MudDatePicker @bind-Date="_entryDate" 
+                          id="entryDate"
+                          Label="Date"
+                          DateFormat="yyyy-MM-dd"
+                          aria-label="Select date for time entry"
+                          Variant="Variant.Outlined" />
+        </div>
+
+        <div class="form-group">
+            <label for="projectSelect" class="form-label">Project</label>
+            <MudSelect T="string" 
+                      @bind-Value="_entry.Project"
+                      id="projectSelect"
+                      Label="Project"
+                      aria-label="Select project"
+                      Variant="Variant.Outlined"
+                      Required="true"
+                      RequiredError="Project is required">
+                @foreach (var project in _projectOptions)
+                {
+                    <MudSelectItem Value="@project">@project</MudSelectItem>
+                }
+            </MudSelect>
+        </div>
+
+        <div class="form-group">
+            <label for="hoursInput" class="form-label">Hours</label>
+            <MudNumericField @bind-Value="_entry.Hours"
+                           id="hoursInput"
+                           Label="Hours"
+                           aria-label="Enter hours worked"
+                           Min="0.25m"
+                           Max="24m"
+                           Step="0.25m"
+                           Variant="Variant.Outlined"
+                           Required="true"
+                           RequiredError="Hours is required" />
+        </div>
+
+        <div class="form-group">
+            <label for="descriptionInput" class="form-label">Description</label>
+            <MudTextField @bind-Value="_entry.Description"
+                         id="descriptionInput"
+                         Label="Work Description"
+                         aria-label="Describe the work performed"
+                         Lines="4"
+                         Variant="Variant.Outlined"
+                         Placeholder="What did you work on?" />
+        </div>
+
+        <div class="form-actions">
+            <MudButton ButtonType="ButtonType.Submit" 
+                      Variant="Variant.Filled" 
+                      Color="Color.Primary"
+                      Class="save-button">
+                Save Entry
+            </MudButton>
+        </div>
+    </EditForm>
+</section>
+
+@code {
+    [Inject]
+    public TimeTrackingService? TimeTrackingService { get; set; }
+
+    [Parameter]
+    public EventCallback OnEntrySaved { get; set; }
+
+    private TimeEntry _entry = new();
+    private DateTime? _entryDate = DateTime.Now;
+    private IReadOnlyList<string> _projectOptions = [];
+
+    protected override void OnInitialized()
+    {
+        _projectOptions = TimeTrackingService.ProjectOptions;
+        _entry.Date = DateOnly.FromDateTime(DateTime.Now);
+        _entry.Project = _projectOptions.FirstOrDefault() ?? string.Empty;
+        _entry.Hours = 1m;
+        _entryDate = DateTime.Now;
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (_entryDate.HasValue)
+        {
+            _entry.Date = DateOnly.FromDateTime(_entryDate.Value);
+        }
+
+        TimeTrackingService?.AddEntry(_entry);
+        
+        ResetForm();
+        await OnEntrySaved.InvokeAsync();
+    }
+
+    private void ResetForm()
+    {
+        _entry = new TimeEntry
+        {
+            Project = _projectOptions.FirstOrDefault() ?? string.Empty,
+            Hours = 1m,
+            Date = DateOnly.FromDateTime(DateTime.Now)
+        };
+        _entryDate = DateTime.Now;
+    }
+}

@@ -1,0 +1,69 @@
+name: Publish to GitHub Pages
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+          dotnet-quality: "preview"
+
+      - name: 📦 Install WASM workload
+        run: dotnet workload install wasm-tools --configfile NuGet.Config
+
+      - name: � Build Release
+        shell: pwsh
+        run: |
+          # Update base href for GitHub Pages
+          $indexHtmlPath = "srcs/Viso.Tracker/wwwroot/index.html"
+          $content = Get-Content $indexHtmlPath -Raw
+          $updated = $content -replace '<base\s+href="[^"]*"\s*/>', '<base href="/Viso.Tracker/" />'
+          Set-Content $indexHtmlPath $updated
+
+          # Build
+          dotnet publish srcs/Viso.Tracker/Viso.Tracker.csproj --configuration Release --output publish
+
+          # Restore base href
+          $content = Get-Content $indexHtmlPath -Raw
+          $restored = $content -replace '<base\s+href="[^"]*"\s*/>', '<base href="/" />'
+          Set-Content $indexHtmlPath $restored
+
+      - name: 📄 Create .nojekyll
+        run: touch publish/wwwroot/.nojekyll
+
+      - name: 📤 Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: publish/wwwroot
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: 🚀 Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+        with:
+          artifact-name: github-pages

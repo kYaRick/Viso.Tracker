@@ -1,0 +1,24 @@
+<Solution>
+  <Folder Name="/docs/" />
+  <Folder Name="/gits/">
+    <File Path=".gitattributes" />
+    <File Path=".gitignore" />
+  </Folder>
+  <Folder Name="/scripts/">
+    <File Path="scripts/build.cs" />
+    <File Path="scripts/CleanIssueDescription.cs" />
+    <File Path="scripts/InstallGitHooks.cs" />
+    <File Path="scripts/SetupGitHooks.cs" />
+    <File Path="scripts/UpdateVersionBadge.cs" />
+    <File Path="scripts/ValidateCommitMessage.cs" />
+  </Folder>
+  <Folder Name="/sln-items/">
+    <File Path="AGENTS.md" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/srcs/">
+    <Project Path="srcs/Viso.Tracker/Viso.Tracker.csproj" />
+  </Folder>
+</Solution>

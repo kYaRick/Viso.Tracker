@@ -1,0 +1,27 @@
+@page "/time-tracking"
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="py-8">
+    <div class="time-tracking-page">
+        <header class="page-header">
+            <h1>Time Tracking</h1>
+            <p class="page-description">Track your work hours and stay productive</p>
+        </header>
+
+        <div class="content-grid">
+            <aside class="form-section">
+                <TimeEntryForm OnEntrySaved="@HandleEntrySaved" />
+            </aside>
+
+            <main class="history-section">
+                <EntryHistory RefreshTrigger="@_refreshCounter" />
+            </main>
+        </div>
+    </div>
+</MudContainer>
+
+@code {
+    private int _refreshCounter = 0;
+
+    private void HandleEntrySaved() =>
+        _refreshCounter++;
+}

@@ -1,0 +1,66 @@
+<Project>
+    <!-- Version & Assembly Info -->
+    <PropertyGroup>
+        <SoftwareTitle>Viso.Tracker</SoftwareTitle>
+        <Version>0.1.0-alpha</Version>
+        <ApplicationDisplayVersion>$(Version)</ApplicationDisplayVersion>
+        <ApplicationVersion>1</ApplicationVersion>
+        <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <NoWarn>$(NoWarn);NU1507</NoWarn>
+        <WarningLevel>4</WarningLevel>
+    </PropertyGroup>
+
+    <!-- .NET 10 Configuration -->
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <InvariantGlobalization>false</InvariantGlobalization>
+    </PropertyGroup>
+
+    <!-- Build Output Paths -->
+    <PropertyGroup>
+        <RepoRoot>$([System.IO.Path]::GetDirectoryName($(MSBuildThisFileDirectory)))</RepoRoot>
+        <OutputPath Condition="'$(IsTestProject)' != 'true'">$(RepoRoot)\builds\$(MSBuildProjectName)\$(Configuration)\</OutputPath>
+        <OutputPath Condition="'$(IsTestProject)' == 'true'">$(RepoRoot)\builds\tests\$(MSBuildProjectName)\$(Configuration)\</OutputPath>
+        <IntermediateOutputPath>$(OutputPath)obj\</IntermediateOutputPath>
+    </PropertyGroup>
+
+    <!-- NuGet Package Defaults -->
+    <PropertyGroup>
+        <Authors>kYaRick</Authors>
+        <Company>kYaRick</Company>
+        <Product>Viso.Tracker</Product>
+        <RepositoryUrl>https://github.com/kYaRick/Viso.Tracker</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    </PropertyGroup>
+
+    <!-- Testing & Quality -->
+    <PropertyGroup>
+        <IsTestProject>false</IsTestProject>
+    </PropertyGroup>
+
+    <!-- Detect Test Projects -->
+    <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('.Tests')) OR $(MSBuildProjectName.EndsWith('.Test'))">
+        <IsTestProject>true</IsTestProject>
+    </PropertyGroup>
+
+    <!-- Test Project References (Auto-injected for *.Tests/*.Test projects) -->
+    <ItemGroup Condition="$(IsTestProject)">
+        <PackageReference Include="xunit" />
+        <PackageReference Include="xunit.runner.visualstudio" />
+        <PackageReference Include="NSubstitute" />
+        <PackageReference Include="Shouldly" />
+        <PackageReference Include="bunit" />
+    </ItemGroup>
+
+    <!-- Assembly Attributes -->
+    <ItemGroup>
+        <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+            <_Parameter1>SoftwareTitle</_Parameter1>
+            <_Parameter2>$(SoftwareTitle)</_Parameter2>
+        </AssemblyAttribute>
+    </ItemGroup>
+</Project>

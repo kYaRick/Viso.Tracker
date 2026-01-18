@@ -1,0 +1,62 @@
+﻿<div class="@ThemeClass">
+    <CascadingValue Value="@_themeState">
+        <MudThemeProvider Theme="@_customTheme" IsDarkMode="@_isDarkMode" />
+        <MudDialogProvider />
+        <MudSnackbarProvider />
+        <MudPopoverProvider />
+
+        <Router AppAssembly="@typeof(App).Assembly" NotFoundPage="typeof(Pages.NotFound)">
+            <Found Context="routeData">
+                <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)"/>
+                <FocusOnNavigate RouteData="@routeData" Selector="#main-content" />
+            </Found>
+        </Router>
+    </CascadingValue>
+</div>
+
+@code {
+    private bool _isDarkMode;
+
+    private readonly MudTheme _customTheme = new()
+    {
+        PaletteLight = new PaletteLight
+        {
+            Primary = "#A4C83F",
+            Secondary = "#BCD269",
+            AppbarBackground = "#A4C83F",
+            AppbarText = "#FFFFFF",
+            Background = "#FAFAFA",
+            Surface = "#FFFFFF",
+            DrawerBackground = "#FFFFFF",
+            DrawerText = "rgba(0,0,0, 0.87)",
+            DrawerIcon = "rgba(0,0,0, 0.54)",
+            TextPrimary = "rgba(0,0,0, 0.87)",
+            TextSecondary = "rgba(0,0,0, 0.54)",
+        },
+        PaletteDark = new PaletteDark
+        {
+            Primary = "#BCD269",
+            Secondary = "#A4C83F",
+            AppbarBackground = "#1E1E1E",
+            AppbarText = "#FFFFFF",
+            Background = "#121212",
+            Surface = "#1E1E1E",
+            DrawerBackground = "#1E1E1E",
+            DrawerText = "rgba(255,255,255, 0.87)",
+            DrawerIcon = "rgba(255,255,255, 0.54)",
+            TextPrimary = "rgba(255,255,255, 0.87)",
+            TextSecondary = "rgba(255,255,255, 0.54)",
+        }
+    };
+
+    private ThemeState _themeState => new(_isDarkMode, ToggleThemeAsync);
+
+    private string ThemeClass => _isDarkMode ? "mud-theme-dark" : "mud-theme-light";
+
+    private Task ToggleThemeAsync()
+    {
+        _isDarkMode = !_isDarkMode;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+}

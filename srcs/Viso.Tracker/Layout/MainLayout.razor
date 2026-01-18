@@ -1,0 +1,42 @@
+﻿@inherits LayoutComponentBase
+@using System.Reflection
+
+<MudLayout>
+    <MudAppBar Elevation="1" Dense="true">
+        <MudIcon Icon="@Icons.Material.Filled.Timer" Class="mr-3" />
+        <MudText Typo="Typo.h6">@GetSoftwareTitle()</MudText>
+        <MudSpacer />
+        <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.DarkMode : Icons.Material.Filled.LightMode)"
+                       Color="Color.Inherit"
+                       aria-label="Toggle theme"
+                       OnClick="ToggleThemeAsync" />
+    </MudAppBar>
+    
+    <MudMainContent>
+        <main id="main-content" tabindex="-1" class="app-shell">
+            <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+                @Body
+            </MudContainer>
+        </main>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    [CascadingParameter]
+    public ThemeState? ThemeState { get; set; }
+
+    private bool _isDarkMode => ThemeState?.IsDarkMode ?? false;
+
+    private string GetSoftwareTitle()
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        var titleAttr = assembly.GetCustomAttributes<AssemblyMetadataAttribute>()
+            .FirstOrDefault(a => a.Key == "SoftwareTitle");
+        return titleAttr?.Value ?? "Viso.Tracker";
+    }
+
+    private Task ToggleThemeAsync()
+    {
+        return ThemeState?.ToggleThemeAsync() ?? Task.CompletedTask;
+    }
+}

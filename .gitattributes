@@ -1,0 +1,29 @@
+# Handle line endings automatically for files detected as text 
+# and truly leave binary files untouched
+* text=auto
+
+# Standard C# files
+*.cs     text diff=csharp
+*.sln    text eol=crlf
+*.csproj text
+*.props  text
+*.targets text
+# Web, Razor and Style files
+*.razor  text
+*.cshtml text
+*.html   text
+*.css    text
+*.js     text
+*.ts     text
+*.json   text
+# Documentation
+*.md     text
+# Binary files
+*.jpg -text
+*.png -text
+*.gif -text
+*.ico -text
+*.pdf -text
+# Project specific
+*.dotsettings text
+* !text !filter !merge !diff
