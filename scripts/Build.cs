@@ -1,82 +1,111 @@
-#!/usr/bin/env dotnet run
+#!/usr/bin/env dotnet
 
-#:package Spectre.Console
-
+using System;
 using System.Diagnostics;
-using Spectre.Console;
+using System.Xml.Linq;
+using System.Linq;
+using System.IO;
+using System.Text.RegularExpressions;
 
-/// <summary>
-/// Builds Viso.Tracker Blazor WebAssembly project
-/// 
-/// Usage: 
-///   dotnet run scripts/Build.cs                     # Local debug build
-///   dotnet run scripts/Build.cs --release           # Local release build
-/// </summary>
-class Build
+// Viso.Tracker Build Script
+// Run this from the project root with: dotnet scripts/Build.cs
+// Or with GitHub Pages patch: dotnet scripts/Build.cs
+
+// Robust path detection
+var rootPath = Directory.GetCurrentDirectory();
+var propsFile = "Directory.Build.props";
+
+if (!File.Exists(Path.Combine(rootPath, propsFile)))
 {
-    static async Task Main(string[] args)
+    rootPath = Path.GetFullPath(Path.Combine(rootPath, ".."));
+}
+
+if (!File.Exists(Path.Combine(rootPath, propsFile)))
+{
+    Console.ForegroundColor = ConsoleColor.Red;
+    Console.WriteLine($"[!] Error: Could not find {propsFile}");
+    Console.ResetColor();
+    Environment.Exit(1);
+}
+
+var versionPropsPath = Path.Combine(rootPath, propsFile);
+var versionProps = XDocument.Load(versionPropsPath);
+var version = versionProps.Descendants("Version").First().Value;
+
+var projectFile = Path.Combine(rootPath, "srcs/Viso.Tracker/Viso.Tracker.csproj");
+var configuration = "Release";
+var outputPath = Path.Combine(rootPath, "publish");
+
+Console.WriteLine("======================================");
+Console.WriteLine($"   Viso.Tracker Build v{version}         ");
+Console.WriteLine("======================================");
+
+try
+{
+    Step("Restoring dependencies...", "dotnet", $"restore {projectFile}");
+    Step("Building and Publishing project...", "dotnet", $"publish {projectFile} -c {configuration} -o {outputPath} -p:Version={version} --no-restore");
+
+    var wwwroot = Path.Combine(outputPath, "wwwroot");
+
+    Console.WriteLine("\n[*] Applying GitHub Pages configuration...");
+
+    // 1. Add .nojekyll to allow folders starting with underscore (like _framework)
+    File.WriteAllText(Path.Combine(wwwroot, ".nojekyll"), "");
+    Console.WriteLine(" - [OK] Created .nojekyll");
+
+    // 2. Patch index.html for GitHub Pages base href
+    var indexPath = Path.Combine(wwwroot, "index.html");
+    if (File.Exists(indexPath))
     {
-        try
-        {
-            var configuration = args.Contains("--release") ? "Release" : "Debug";
-            var publishOutput = configuration == "Release" ? "publish" : "bin";
-            var repoRoot = GetRepositoryRoot();
-            var projectPath = Path.Combine(repoRoot, "srcs", "Viso.Tracker");
+        Console.WriteLine("\n[PATCH] Updating index.html for GitHub Pages...");
+        var indexContent = File.ReadAllText(indexPath);
 
-            await AnsiConsole.Status()
-                .Spinner(Spinner.Known.Dots)
-                .StartAsync($"[cyan]Building {configuration}...[/]", async ctx =>
-                {
-                    ctx.Status("[blue]🔨 Building project...[/]");
-                    var buildArgs = $"publish \"{projectPath}\" --configuration {configuration} --output \"{publishOutput}\"";
-                    await RunCommand("dotnet", buildArgs, repoRoot);
+        var baseHrefPattern = @"<base\s+href=[""']\/[""']\s*\/?>";
+        var newBaseHref = "<base href=\"/Viso.Tracker/\" />";
 
-                    AnsiConsole.MarkupLine($"[green]✅ Build completed successfully to {publishOutput}/[/]");
-                });
-        }
-        catch (Exception ex)
+        if (Regex.IsMatch(indexContent, baseHrefPattern))
         {
-            AnsiConsole.MarkupLine($"[red]❌ Error: {ex.Message}[/]");
-            Environment.Exit(1);
+            indexContent = Regex.Replace(indexContent, baseHrefPattern, newBaseHref);
+            Console.WriteLine(" - [OK] Patched <base href> to /Viso.Tracker/");
         }
+
+        File.WriteAllText(indexPath, indexContent);
+
+        // Copy index.html to 404.html for SPA routing support
+        File.Copy(indexPath, Path.Combine(wwwroot, "404.html"), true);
+        Console.WriteLine(" - [OK] Created 404.html for SPA routing");
     }
 
-    static async Task RunCommand(string command, string arguments, string workingDirectory)
+    Console.WriteLine($"\n[SUCCESS] Build completed! Static site ready in '{wwwroot}/' folder.");
+}
+catch (Exception ex)
+{
+    Console.ForegroundColor = ConsoleColor.Red;
+    Console.WriteLine($"\n[FAILED] Build failed: {ex.Message}");
+    Console.ResetColor();
+    Environment.Exit(1);
+}
+
+void Step(string message, string command, string args)
+{
+    Console.WriteLine($"\n>> {message}");
+    Console.ForegroundColor = ConsoleColor.DarkGray;
+    Console.WriteLine($"> {command} {args}");
+    Console.ResetColor();
+
+    var psi = new ProcessStartInfo
     {
-        var psi = new ProcessStartInfo
-        {
-            FileName = command,
-            Arguments = arguments,
-            WorkingDirectory = workingDirectory,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
+        FileName = command,
+        Arguments = args,
+        UseShellExecute = false,
+        CreateNoWindow = false
+    };
 
-        using var process = Process.Start(psi);
-        if (process == null)
-            throw new InvalidOperationException($"Failed to start process: {command}");
+    using var process = Process.Start(psi);
+    process?.WaitForExit();
 
-        await process.WaitForExitAsync();
-
-        if (process.ExitCode != 0)
-        {
-            var error = process.StandardError.ReadToEnd();
-            throw new InvalidOperationException($"Build failed: {error}");
-        }
-    }
-
-    static string GetRepositoryRoot()
+    if (process?.ExitCode != 0)
     {
-        var currentDir = Directory.GetCurrentDirectory();
-        while (!File.Exists(Path.Combine(currentDir, "Directory.Build.props")))
-        {
-            var parent = Directory.GetParent(currentDir);
-            if (parent == null)
-                throw new InvalidOperationException("Repository root not found");
-            currentDir = parent.FullName;
-        }
-        return currentDir;
+        throw new Exception($"Command '{command} {args}' exited with code {process?.ExitCode}");
     }
 }

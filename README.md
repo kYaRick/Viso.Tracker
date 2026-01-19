@@ -37,14 +37,6 @@ Minimal, fast time tracking built with Blazor WebAssembly and MudBlazor. Capture
 
 ![Viso Tracker Demo](./docs/assets/Viso.Tracker.Demo.gif)
 
-## 🧭 Spec Alignment
-
-This implementation follows SPEC-0001:
-
-- Scope: Time Entry form + grouped history with totals
-- Components: MudDatePicker, MudSelect, MudNumericField/MudTextField, MudButton, MudTable
-- Accessibility: WCAG 2.2 AA (labels, aria, focus, contrast, error states)
-
 ## 🧰 Tech Stack
 
 - Runtime: .NET 10 (Blazor WebAssembly Standalone)
@@ -72,8 +64,8 @@ Suggested dev flow:
 Use the one-liner to clone and optionally set up the required .NET SDK:
 
 ```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-irm https://raw.githubusercontent.com/kYaRick/Viso.Tracker/main/scripts/setup.ps1 | iex
+Set-ExecutionPolicy Bypass -Scope Process -Force; 
+irm https://raw.githubusercontent.com/kYaRick/Viso.Tracker/main/scripts/setup-iex.ps1 | iex
 ```
 
 This launches an interactive menu:
@@ -177,5 +169,9 @@ dotnet run scripts/InstallGitHooks.cs
 > dotnet scripts/ValidateCommitMessage.cs --commit-format
 > ```
 
-—
-Made with ❤️ for 🇺🇦
+
+---
+
+<div align="center">
+  Made with ❤️ for 🇺🇦
+</div>
